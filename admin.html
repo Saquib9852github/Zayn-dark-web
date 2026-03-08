@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zayn Tour & Travel – Admin Panel</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{overflow-x:hidden;scroll-behavior:smooth;}
+    body{font-family:'Montserrat',sans-serif;background:#030a04;overflow-x:hidden;color:#d4e8d4;min-height:100vh;}
+    h1,h2,h3,h4,.serif{font-family:'Cormorant Garamond',serif;}
+
+    ::-webkit-scrollbar{width:7px;}
+    ::-webkit-scrollbar-track{background:#020703;}
+    ::-webkit-scrollbar-thumb{background:linear-gradient(#4caf50,#c9a96e);border-radius:10px;}
+
+    /* ===== LOGIN ===== */
+    .login-screen{
+      position:fixed;inset:0;z-index:99999;
+      display:flex;align-items:center;justify-content:center;
+      background:url('https://images.unsplash.com/photo-1448375240586-882707db888b?w=1920&q=90&auto=format&fit=crop') center/cover no-repeat;
+    }
+    .login-fog{position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,7,3,0.75) 0%,rgba(2,7,3,0.60) 50%,rgba(2,7,3,0.85) 100%);}
+    .login-box{
+      position:relative;z-index:1;
+      background:rgba(3,12,4,0.82);
+      border:1px solid rgba(201,169,110,0.28);
+      border-radius:28px;padding:3.2rem 2.8rem;
+      width:100%;max-width:420px;text-align:center;
+      box-shadow:0 30px 80px rgba(0,0,0,0.7),0 0 40px rgba(201,169,110,0.05),inset 0 1px 0 rgba(201,169,110,0.1);
+      backdrop-filter:blur(24px);
+    }
+    .login-ff{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:28px;}
+    .ff{position:absolute;border-radius:50%;animation:ffAnim linear infinite;}
+    @keyframes ffAnim{0%{opacity:0;transform:translate(0,0);}25%{opacity:1;}75%{opacity:1;}100%{opacity:0;transform:translate(var(--tx),var(--ty));}}
+    .login-glow{position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(201,169,110,0.12),transparent 70%);pointer-events:none;}
+    .login-input{
+      width:100%;padding:1rem 1.2rem;
+      border-radius:12px;
+      border:1px solid rgba(201,169,110,0.28);
+      background:rgba(255,255,255,0.05);
+      color:#f4e4c1;font-size:15px;
+      font-family:'Montserrat',sans-serif;
+      outline:none;text-align:center;letter-spacing:4px;
+      transition:all 0.3s;
+    }
+    .login-input:focus{border-color:rgba(201,169,110,0.6);background:rgba(201,169,110,0.06);box-shadow:0 0 0 3px rgba(201,169,110,0.10);}
+    .login-input::placeholder{color:rgba(255,255,255,0.3);letter-spacing:1px;}
+
+    /* ===== BUTTONS ===== */
+    .btn-gold{
+      background:linear-gradient(135deg,#b8860b,#c9a96e,#f4e4c1,#c9a96e,#b8860b);
+      background-size:300% 300%;
+      color:#030a04;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+      border:none;cursor:pointer;transition:all 0.5s;
+      box-shadow:0 4px 20px rgba(201,169,110,0.25);
+    }
+    .btn-gold:hover{background-position:100% 50%;transform:translateY(-2px);box-shadow:0 10px 30px rgba(201,169,110,0.45);}
+    .btn-gold:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+    .btn-danger{background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:white;font-weight:600;text-transform:uppercase;letter-spacing:1px;border:1px solid rgba(239,68,68,0.3);cursor:pointer;transition:all 0.3s;}
+    .btn-danger:hover{background:linear-gradient(135deg,#b91c1c,#dc2626);transform:translateY(-1px);box-shadow:0 6px 20px rgba(185,28,28,0.35);}
+    .btn-ghost{background:transparent;color:#c9a96e;font-weight:600;text-transform:uppercase;letter-spacing:1px;border:1px solid rgba(201,169,110,0.3);cursor:pointer;transition:all 0.3s;}
+    .btn-ghost:hover{background:rgba(201,169,110,0.08);border-color:rgba(201,169,110,0.55);}
+
+    /* ===== NAVBAR ===== */
+    .navbar{
+      position:fixed;top:0;left:0;right:0;z-index:500;
+      background:rgba(3,10,4,0.94);
+      backdrop-filter:blur(24px);
+      border-bottom:1px solid rgba(201,169,110,0.18);
+      box-shadow:0 4px 40px rgba(0,0,0,0.6);
+    }
+
+    /* ===== ADD BUTTONS ===== */
+    .add-btn{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:0.5rem;padding:1.2rem 0.5rem;border-radius:16px;cursor:pointer;border:none;
+      transition:all 0.4s;font-size:0.76rem;font-weight:600;
+      text-transform:uppercase;letter-spacing:0.5px;
+    }
+    .add-btn:hover{transform:translateY(-4px);}
+    .add-btn-logo{background:rgba(201,169,110,0.10);color:#c9a96e;border:1px solid rgba(201,169,110,0.30);}
+    .add-btn-logo:hover{background:rgba(201,169,110,0.18);box-shadow:0 10px 25px rgba(201,169,110,0.15);}
+    .add-btn-pkg{background:rgba(76,175,80,0.10);color:#81c784;border:1px solid rgba(76,175,80,0.28);}
+    .add-btn-pkg:hover{background:rgba(76,175,80,0.18);box-shadow:0 10px 25px rgba(76,175,80,0.15);}
+    .add-btn-veh{background:rgba(33,150,243,0.10);color:#90caf9;border:1px solid rgba(33,150,243,0.28);}
+    .add-btn-veh:hover{background:rgba(33,150,243,0.18);box-shadow:0 10px 25px rgba(33,150,243,0.12);}
+    .add-btn-dest{background:rgba(156,39,176,0.10);color:#ce93d8;border:1px solid rgba(156,39,176,0.28);}
+    .add-btn-dest:hover{background:rgba(156,39,176,0.18);box-shadow:0 10px 25px rgba(156,39,176,0.12);}
+    .add-btn-rev{background:rgba(245,158,11,0.10);color:#fcd34d;border:1px solid rgba(245,158,11,0.28);}
+    .add-btn-rev:hover{background:rgba(245,158,11,0.18);box-shadow:0 10px 25px rgba(245,158,11,0.12);}
+
+    /* ===== STAT CARDS ===== */
+    .stat-card{border-radius:18px;padding:1.4rem;text-align:center;border:1px solid;transition:all 0.4s;cursor:default;}
+    .stat-card:hover{transform:translateY(-5px);}
+
+    /* ===== SECTION PANEL ===== */
+    .panel{
+      background:rgba(4,12,5,0.88);
+      border:1px solid rgba(201,169,110,0.14);
+      border-radius:22px;padding:1.75rem;
+      box-shadow:0 8px 40px rgba(0,0,0,0.5),inset 0 1px 0 rgba(201,169,110,0.06);
+      backdrop-filter:blur(10px);
+      position:relative;overflow:hidden;
+    }
+    .panel::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,rgba(201,169,110,0.4),transparent);}
+    .panel-title{display:flex;align-items:center;gap:0.8rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid rgba(201,169,110,0.10);}
+    .panel-icon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;border:1px solid;}
+
+    /* ===== ADMIN CARD ===== */
+    .admin-card{
+      background:rgba(5,15,6,0.90);
+      border:1px solid rgba(201,169,110,0.14);
+      border-radius:18px;overflow:hidden;
+      box-shadow:0 4px 25px rgba(0,0,0,0.5),inset 0 1px 0 rgba(201,169,110,0.06);
+      transition:all 0.4s;position:relative;
+    }
+    .admin-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(201,169,110,0.3),transparent);}
+    .admin-card:hover{transform:translateY(-5px);border-color:rgba(201,169,110,0.28);box-shadow:0 15px 40px rgba(0,0,0,0.6),0 0 15px rgba(201,169,110,0.07);}
+    .admin-card img{width:100%;height:180px;object-fit:cover;display:block;}
+    .admin-card-body{padding:1.2rem;}
+
+    /* ===== MODAL ===== */
+    .modal{display:none;position:fixed;z-index:9999;inset:0;background:rgba(0,0,0,0.80);backdrop-filter:blur(10px);padding:16px;align-items:center;justify-content:center;}
+    .modal.active{display:flex;}
+    .modal-box{
+      background:linear-gradient(160deg,#041206 0%,#071a09 60%,#041206 100%);
+      border:1px solid rgba(201,169,110,0.25);
+      border-radius:24px;width:100%;max-width:560px;
+      position:relative;
+      box-shadow:0 30px 80px rgba(0,0,0,0.8),0 0 30px rgba(201,169,110,0.06);
+      animation:modalSlide 0.35s cubic-bezier(0.4,0,0.2,1);
+      max-height:90vh;overflow-y:auto;
+    }
+    .modal-box::-webkit-scrollbar{width:5px;}
+    .modal-box::-webkit-scrollbar-thumb{background:rgba(201,169,110,0.3);border-radius:10px;}
+    .modal-header{padding:1.75rem 1.75rem 0;border-bottom:1px solid rgba(201,169,110,0.12);padding-bottom:1.25rem;margin-bottom:1.5rem;position:relative;}
+    .modal-body{padding:0 1.75rem 1.75rem;}
+    @keyframes modalSlide{from{transform:translateY(-25px) scale(0.97);opacity:0;}to{transform:translateY(0) scale(1);opacity:1;}}
+    .close-x{position:absolute;right:1.5rem;top:1.5rem;width:32px;height:32px;border-radius:50%;background:rgba(201,169,110,0.08);border:1px solid rgba(201,169,110,0.2);color:rgba(201,169,110,0.7);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all 0.3s;}
+    .close-x:hover{background:rgba(201,169,110,0.18);color:#c9a96e;transform:rotate(90deg);}
+
+    /* ===== FORM ===== */
+    .f-label{display:block;font-weight:600;margin-bottom:0.45rem;color:#81c784;font-size:11px;letter-spacing:1px;text-transform:uppercase;}
+    .f-input{width:100%;padding:0.9rem 1rem;border:1px solid rgba(201,169,110,0.22);border-radius:12px;font-size:14px;font-family:'Montserrat',sans-serif;background:rgba(255,255,255,0.04);color:#d4e8d4;outline:none;transition:all 0.3s;margin-bottom:1.15rem;}
+    .f-input:focus{border-color:rgba(201,169,110,0.55);background:rgba(201,169,110,0.05);box-shadow:0 0 0 3px rgba(201,169,110,0.08);}
+    .f-input::placeholder{color:rgba(212,232,212,0.25);}
+    select.f-input option{background:#071a09;color:#d4e8d4;}
+
+    /* ===== TOAST ===== */
+    .toast-wrap{position:fixed;top:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:10px;}
+    @keyframes toastIn{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+    /* ===== SHIMMER ===== */
+    @keyframes shimmer{0%{background-position:-1000px 0;}100%{background-position:1000px 0;}}
+    .shimmer{background:linear-gradient(90deg,#071009 25%,#0f1e11 50%,#071009 75%);background-size:1000px 100%;animation:shimmer 2s infinite;border-radius:14px;border:1px solid rgba(201,169,110,0.07);}
+
+    /* ===== BADGES ===== */
+    .badge-gold{background:rgba(201,169,110,0.14);color:#f4e4c1;padding:0.3rem 0.85rem;border-radius:2rem;font-size:0.75rem;font-weight:700;border:1px solid rgba(201,169,110,0.28);}
+    .badge-green{background:rgba(76,175,80,0.12);color:#81c784;padding:0.3rem 0.85rem;border-radius:2rem;font-size:0.75rem;font-weight:600;border:1px solid rgba(76,175,80,0.24);}
+    .badge-blue{background:rgba(33,150,243,0.10);color:#90caf9;padding:0.3rem 0.85rem;border-radius:2rem;font-size:0.75rem;font-weight:600;border:1px solid rgba(33,150,243,0.22);}
+    .feature-tag{display:inline-flex;align-items:center;gap:0.3rem;background:rgba(76,175,80,0.07);border:1px solid rgba(76,175,80,0.16);color:#81c784;padding:0.22rem 0.65rem;border-radius:2rem;font-size:0.72rem;margin:0.15rem;}
+
+    @media(max-width:640px){
+      .add-btns-grid{grid-template-columns:repeat(2,1fr)!important;}
+      .admin-grid{grid-template-columns:1fr!important;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== TOAST ===== -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ===== LOGIN ===== -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-fog"></div>
+  <div class="login-box" id="loginBox">
+    <div class="login-ff" id="loginFF"></div>
+    <div class="login-glow"></div>
+    <div style="font-size:3rem;margin-bottom:0.6rem;filter:drop-shadow(0 0 15px rgba(201,169,110,0.6));">🌿</div>
+    <h2 class="serif" style="color:#c9a96e;font-size:2.4rem;margin-bottom:0.3rem;text-shadow:0 0 20px rgba(201,169,110,0.3);">Admin Panel</h2>
+    <p style="color:rgba(129,199,132,0.6);margin-bottom:2rem;font-size:0.82rem;letter-spacing:1px;">Zayn Tour & Travel, Darjeeling</p>
+    <div style="position:relative;margin-bottom:0.8rem;">
+      <input type="password" id="adminPass" class="login-input" placeholder="Password darj karein" onkeydown="if(event.key==='Enter')checkLogin()">
+    </div>
+    <p id="loginErr" style="color:#f87171;font-size:0.82rem;margin-bottom:1rem;display:none;">❌ Galat password! Dobara try karein.</p>
+    <button onclick="checkLogin()" class="btn-gold" style="width:100%;padding:1rem;border-radius:12px;font-size:0.9rem;">
+      <i class="fas fa-leaf" style="margin-right:0.5rem;"></i>Login karein
+    </button>
+    <p style="margin-top:1.5rem;font-size:0.75rem;color:rgba(129,199,132,0.3);">🌲 Dark Forest Admin v2.0</p>
+  </div>
+</div>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar">
+  <div style="max-width:1400px;margin:0 auto;padding:0.75rem 1.5rem;display:flex;justify-content:space-between;align-items:center;">
+    <div style="display:flex;align-items:center;gap:0.8rem;">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1b5e20,#c9a96e);display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 0 12px rgba(201,169,110,0.35);">🌿</div>
+      <div>
+        <span class="serif" style="color:#c9a96e;font-size:1.35rem;font-weight:700;">Zayn Admin</span>
+        <span style="color:rgba(129,199,132,0.45);font-size:0.72rem;margin-left:0.6rem;letter-spacing:1px;text-transform:uppercase;">Dark Forest Panel</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <a href="user.html" target="_blank" style="color:#81c784;text-decoration:none;font-size:0.8rem;border:1px solid rgba(76,175,80,0.25);padding:0.4rem 1rem;border-radius:8px;transition:all 0.3s;" onmouseover="this.style.background='rgba(76,175,80,0.1)'" onmouseout="this.style.background='transparent'">
+        <i class="fas fa-external-link-alt" style="margin-right:0.3rem;"></i>Website
+      </a>
+      <button onclick="logout()" class="btn-gold" style="padding:0.4rem 1.2rem;border-radius:8px;font-size:0.75rem;">
+        <i class="fas fa-sign-out-alt" style="margin-right:0.3rem;"></i>Logout
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main style="padding-top:5rem;padding-bottom:4rem;min-height:100vh;background:url('https://images.unsplash.com/photo-1448375240586-882707db888b?w=1920&q=60&auto=format&fit=crop') center/cover fixed;">
+  <div style="position:fixed;inset:0;background:rgba(2,7,3,0.88);z-index:-1;pointer-events:none;top:60px;"></div>
+  <div style="max-width:1350px;margin:0 auto;padding:1.5rem;">
+
+    <!-- HEADER -->
+    <div style="text-align:center;margin-bottom:2.5rem;padding:2.5rem 1rem;background:rgba(4,12,5,0.80);border-radius:24px;border:1px solid rgba(201,169,110,0.14);backdrop-filter:blur(12px);position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#c9a96e,transparent);"></div>
+      <div style="font-size:2.5rem;margin-bottom:0.5rem;filter:drop-shadow(0 0 15px rgba(201,169,110,0.5));">🌿</div>
+      <h2 class="serif" style="color:#f4e4c1;font-size:clamp(1.8rem,5vw,2.8rem);margin-bottom:0.4rem;text-shadow:0 0 20px rgba(201,169,110,0.2);">Admin Dashboard</h2>
+      <p style="color:#4a7a4a;font-size:0.88rem;letter-spacing:0.5px;">Manage your dark forest travel packages & content</p>
+    </div>
+
+    <!-- STATS -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem;">
+      <div class="stat-card" style="background:rgba(201,169,110,0.08);border-color:rgba(201,169,110,0.2);">
+        <div style="font-size:1.8rem;margin-bottom:0.3rem;">🏔️</div>
+        <div id="statPkg" class="serif" style="font-size:2.2rem;font-weight:700;color:#c9a96e;text-shadow:0 0 15px rgba(201,169,110,0.4);line-height:1;">0</div>
+        <div style="font-size:0.72rem;color:#81c784;letter-spacing:1.5px;text-transform:uppercase;margin-top:0.3rem;">Packages</div>
+      </div>
+      <div class="stat-card" style="background:rgba(76,175,80,0.08);border-color:rgba(76,175,80,0.22);">
+        <div style="font-size:1.8rem;margin-bottom:0.3rem;">🚗</div>
+        <div id="statVeh" class="serif" style="font-size:2.2rem;font-weight:700;color:#81c784;text-shadow:0 0 15px rgba(76,175,80,0.4);line-height:1;">0</div>
+        <div style="font-size:0.72rem;color:#81c784;letter-spacing:1.5px;text-transform:uppercase;margin-top:0.3rem;">Vehicles</div>
+      </div>
+      <div class="stat-card" style="background:rgba(156,39,176,0.08);border-color:rgba(156,39,176,0.22);">
+        <div style="font-size:1.8rem;margin-bottom:0.3rem;">📸</div>
+        <div id="statDest" class="serif" style="font-size:2.2rem;font-weight:700;color:#ce93d8;text-shadow:0 0 15px rgba(156,39,176,0.4);line-height:1;">0</div>
+        <div style="font-size:0.72rem;color:#ce93d8;letter-spacing:1.5px;text-transform:uppercase;margin-top:0.3rem;">Destinations</div>
+      </div>
+      <div class="stat-card" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.22);">
+        <div style="font-size:1.8rem;margin-bottom:0.3rem;">⭐</div>
+        <div id="statRev" class="serif" style="font-size:2.2rem;font-weight:700;color:#fcd34d;text-shadow:0 0 15px rgba(245,158,11,0.4);line-height:1;">0</div>
+        <div style="font-size:0.72rem;color:#fcd34d;letter-spacing:1.5px;text-transform:uppercase;margin-top:0.3rem;">Reviews</div>
+      </div>
+    </div>
+
+    <!-- ADD BUTTONS -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.85rem;margin-bottom:2.5rem;" class="add-btns-grid">
+      <button onclick="openModal('logo')" class="add-btn add-btn-logo">
+        <i class="fas fa-image" style="font-size:1.4rem;"></i><span>Logo Upload</span>
+      </button>
+      <button onclick="openModal('package')" class="add-btn add-btn-pkg">
+        <i class="fas fa-map-marked-alt" style="font-size:1.4rem;"></i><span>Add Package</span>
+      </button>
+      <button onclick="openModal('vehicle')" class="add-btn add-btn-veh">
+        <i class="fas fa-car" style="font-size:1.4rem;"></i><span>Add Vehicle</span>
+      </button>
+      <button onclick="openModal('destination')" class="add-btn add-btn-dest">
+        <i class="fas fa-globe" style="font-size:1.4rem;"></i><span>Add Destination</span>
+      </button>
+      <button onclick="openModal('review')" class="add-btn add-btn-rev">
+        <i class="fas fa-star" style="font-size:1.4rem;"></i><span>Add Review</span>
+      </button>
+    </div>
+
+    <!-- CONTENT PANELS -->
+    <div style="display:flex;flex-direction:column;gap:2rem;">
+
+      <!-- PACKAGES PANEL -->
+      <div class="panel">
+        <div class="panel-title">
+          <div class="panel-icon" style="background:rgba(201,169,110,0.10);border-color:rgba(201,169,110,0.28);font-size:1.1rem;">🏔️</div>
+          <h3 class="serif" style="color:#f4e4c1;font-size:1.7rem;">Tour Packages</h3>
+        </div>
+        <div id="packagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.2rem;" class="admin-grid">
+          <div class="shimmer" style="height:320px;"></div>
+          <div class="shimmer" style="height:320px;"></div>
+        </div>
+      </div>
+
+      <!-- VEHICLES PANEL -->
+      <div class="panel">
+        <div class="panel-title">
+          <div class="panel-icon" style="background:rgba(76,175,80,0.10);border-color:rgba(76,175,80,0.28);">🚗</div>
+          <h3 class="serif" style="color:#f4e4c1;font-size:1.7rem;">Vehicles</h3>
+        </div>
+        <div id="vehiclesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.2rem;" class="admin-grid">
+          <div class="shimmer" style="height:300px;"></div>
+          <div class="shimmer" style="height:300px;"></div>
+        </div>
+      </div>
+
+      <!-- DESTINATIONS PANEL -->
+      <div class="panel">
+        <div class="panel-title">
+          <div class="panel-icon" style="background:rgba(156,39,176,0.10);border-color:rgba(156,39,176,0.28);">📸</div>
+          <h3 class="serif" style="color:#f4e4c1;font-size:1.7rem;">Destinations / Gallery</h3>
+        </div>
+        <div id="destinationsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.2rem;" class="admin-grid">
+          <div class="shimmer" style="height:280px;"></div>
+          <div class="shimmer" style="height:280px;"></div>
+        </div>
+      </div>
+
+      <!-- REVIEWS PANEL -->
+      <div class="panel">
+        <div class="panel-title">
+          <div class="panel-icon" style="background:rgba(245,158,11,0.10);border-color:rgba(245,158,11,0.28);">⭐</div>
+          <h3 class="serif" style="color:#f4e4c1;font-size:1.7rem;">Customer Reviews</h3>
+        </div>
+        <div id="reviewsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.2rem;" class="admin-grid">
+          <div class="shimmer" style="height:200px;"></div>
+          <div class="shimmer" style="height:200px;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- ===== MODAL ===== -->
+<div id="adminModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modalTitle" class="serif" style="font-size:1.75rem;color:#f4e4c1;"></h3>
+      <span class="close-x" onclick="closeModal()">✕</span>
+    </div>
+    <div class="modal-body">
+      <form id="adminForm">
+        <div id="formFields"></div>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.5rem;">
+          <button type="submit" id="submitBtn" class="btn-gold" style="width:100%;padding:1rem;border-radius:12px;font-size:0.88rem;">
+            <span id="submitText"><i class="fas fa-save" style="margin-right:0.5rem;"></i>Save Changes</span>
+            <span id="submitLoader" style="display:none;"><i class="fas fa-circle-notch fa-spin" style="margin-right:0.5rem;"></i>Saving...</span>
+          </button>
+          <button type="button" onclick="closeModal()" class="btn-ghost" style="width:100%;padding:0.85rem;border-radius:12px;font-size:0.85rem;">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== LOGIN FIREFLIES =====
+  (function(){
+    const c=document.getElementById('loginFF');
+    if(!c) return;
+    const colors=['rgba(201,169,110,0.8)','rgba(129,199,132,0.7)','rgba(244,228,193,0.6)'];
+    for(let i=0;i<14;i++){
+      const ff=document.createElement('div');
+      ff.className='ff';
+      const s=Math.random()*3+1.5;
+      const tx=(Math.random()-0.5)*120+'px';
+      const ty=(Math.random()-0.5)*120+'px';
+      const col=colors[Math.floor(Math.random()*colors.length)];
+      ff.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${s}px;height:${s}px;background:${col};box-shadow:0 0 ${s*3}px ${col};--tx:${tx};--ty:${ty};animation-duration:${Math.random()*5+4}s;animation-delay:${Math.random()*6}s;`;
+      c.appendChild(ff);
+    }
+  })();
+
+  // ===== LOGIN =====
+  const ADMIN_PASSWORD = "Zaynrahim";
+  function checkLogin(){
+    const v=document.getElementById('adminPass').value;
+    const err=document.getElementById('loginErr');
+    if(v===ADMIN_PASSWORD){
+      document.getElementById('loginScreen').style.opacity='0';
+      document.getElementById('loginScreen').style.transition='opacity 0.5s';
+      setTimeout(()=>{document.getElementById('loginScreen').style.display='none';},500);
+    } else {
+      err.style.display='block';
+      document.getElementById('adminPass').value='';
+      document.getElementById('loginBox').style.animation='shake 0.4s ease';
+      setTimeout(()=>{document.getElementById('loginBox').style.animation='';},400);
+    }
+  }
+  function logout(){ location.reload(); }
+
+  // ===== FIREBASE =====
+  const firebaseConfig={apiKey:"AIzaSyALKxd2bFEfLW5-GOKA3jTo-5dh3Q8SLiA",authDomain:"zayn-tour.firebaseapp.com",projectId:"zayn-tour",storageBucket:"zayn-tour.firebasestorage.app",messagingSenderId:"193180929146",appId:"1:193180929146:web:1bba2ae30a315773993fc3"};
+  firebase.initializeApp(firebaseConfig);
+  const db=firebase.firestore();
+  let editingItem=null;
+
+  async function loadData(){
+    try{
+      const snap=await db.collection('tourItems').get();
+      const items={packages:[],vehicles:[],destinations:[],reviews:[]};
+      snap.forEach(doc=>{
+        const d={id:doc.id,...doc.data()};
+        if(d.type==='package') items.packages.push(d);
+        else if(d.type==='vehicle') items.vehicles.push(d);
+        else if(d.type==='destination') items.destinations.push(d);
+        else if(d.type==='review') items.reviews.push(d);
+      });
+      document.getElementById('statPkg').textContent=items.packages.length;
+      document.getElementById('statVeh').textContent=items.vehicles.length;
+      document.getElementById('statDest').textContent=items.destinations.length;
+      document.getElementById('statRev').textContent=items.reviews.length;
+      renderPackages(items.packages);
+      renderVehicles(items.vehicles);
+      renderDestinations(items.destinations);
+      renderReviews(items.reviews);
+    }catch(e){console.error(e);showToast('Data load error!','error');}
+  }
+
+  const empty=(icon,msg)=>`<div style="grid-column:1/-1;text-align:center;padding:3rem 2rem;">
+    <div style="font-size:3rem;margin-bottom:0.75rem;filter:drop-shadow(0 0 8px rgba(201,169,110,0.3));">${icon}</div>
+    <p style="color:#3a6a3a;font-size:0.9rem;">${msg}</p>
+  </div>`;
+
+  function cardHtml(item, badges='', extra=''){
+    return `<div class="admin-card">
+      ${item.image?`<img src="${item.image}" alt="${item.name||''}" onerror="this.style.display='none'">`:''}
+      <div class="admin-card-body">
+        <h4 class="serif" style="font-size:1.15rem;color:#f4e4c1;margin-bottom:0.4rem;font-weight:700;">${item.name||item.reviewAuthor||''}</h4>
+        ${item.description?`<p style="font-size:0.83rem;color:#4a7a4a;line-height:1.6;margin-bottom:0.75rem;">${item.description.substring(0,100)}${item.description.length>100?'...':''}</p>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.75rem;">${badges}</div>
+        ${extra}
+        <div style="display:flex;gap:0.6rem;margin-top:0.9rem;">
+          <button onclick='editItem(${JSON.stringify(item).replace(/'/g,"&#39;")})' class="btn-ghost" style="flex:1;padding:0.55rem;border-radius:8px;font-size:0.75rem;"><i class="fas fa-edit" style="margin-right:0.3rem;"></i>Edit</button>
+          <button onclick="deleteItem('${item.id}',this)" class="btn-danger" style="flex:1;padding:0.55rem;border-radius:8px;font-size:0.75rem;"><i class="fas fa-trash" style="margin-right:0.3rem;"></i>Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderPackages(list){
+    document.getElementById('packagesGrid').innerHTML=list.length===0?empty('🏔️','No packages yet. Pehla package add karein!'):
+      list.map(p=>cardHtml(p,
+        `${p.price?`<span class="badge-gold">💰 ${p.price}</span>`:''}${p.duration?`<span class="badge-blue">⏱️ ${p.duration}</span>`:''}`,
+        p.features?`<p style="font-size:0.76rem;color:#3a6a3a;">🌿 ${p.features.substring(0,60)}...</p>`:''
+      )).join('');
+  }
+  function renderVehicles(list){
+    document.getElementById('vehiclesGrid').innerHTML=list.length===0?empty('🚗','No vehicles yet. Pehla vehicle add karein!'):
+      list.map(v=>cardHtml(v,
+        `${v.price?`<span class="badge-gold">💰 ${v.price}</span>`:''}${v.capacity?`<span class="badge-green">👥 ${v.capacity}</span>`:''}`,
+        v.features?`<p style="font-size:0.76rem;color:#3a6a3a;">✅ ${v.features.substring(0,60)}...</p>`:''
+      )).join('');
+  }
+  function renderDestinations(list){
+    document.getElementById('destinationsGrid').innerHTML=list.length===0?empty('📸','No destinations yet. Pehla destination add karein!'):
+      list.map(d=>cardHtml(d,'','')).join('');
+  }
+  function renderReviews(list){
+    document.getElementById('reviewsGrid').innerHTML=list.length===0?empty('⭐','No reviews yet. Pehla review add karein!'):
+      list.map(r=>`<div class="admin-card">
+        <div class="admin-card-body">
+          <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.85rem;">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#c9a96e,#f4e4c1);display:flex;align-items:center;justify-content:center;color:#030a04;font-size:1.2rem;font-weight:700;flex-shrink:0;">${r.reviewAuthor?r.reviewAuthor[0].toUpperCase():'?'}</div>
+            <div>
+              <h4 style="font-weight:700;color:#f4e4c1;font-size:0.9rem;">${r.reviewAuthor||'Anonymous'}</h4>
+              <div style="color:#f59e0b;font-size:0.9rem;letter-spacing:1.5px;">${'★'.repeat(r.rating||5)}${'☆'.repeat(5-(r.rating||5))}</div>
+            </div>
+          </div>
+          <p style="font-size:0.83rem;color:#4a7a4a;font-style:italic;line-height:1.6;">"${(r.reviewText||'').substring(0,120)}${(r.reviewText||'').length>120?'...':''}"</p>
+          <div style="display:flex;gap:0.6rem;margin-top:0.9rem;">
+            <button onclick='editItem(${JSON.stringify(r).replace(/'/g,"&#39;")})' class="btn-ghost" style="flex:1;padding:0.55rem;border-radius:8px;font-size:0.75rem;"><i class="fas fa-edit" style="margin-right:0.3rem;"></i>Edit</button>
+            <button onclick="deleteItem('${r.id}',this)" class="btn-danger" style="flex:1;padding:0.55rem;border-radius:8px;font-size:0.75rem;"><i class="fas fa-trash" style="margin-right:0.3rem;"></i>Delete</button>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  // ===== DELETE =====
+  window.deleteItem=async function(id,btn){
+    if(btn.dataset.confirming!=='true'){
+      const orig=btn.innerHTML; btn.innerHTML='⚠️ Pakka?'; btn.dataset.confirming='true';
+      btn.style.background='linear-gradient(135deg,#92400e,#b45309)';
+      setTimeout(()=>{btn.innerHTML=orig;btn.dataset.confirming='false';btn.style.background='';},3000);
+      return;
+    }
+    try{await db.collection('tourItems').doc(id).delete();showToast('Delete ho gaya! 🌿','success');}
+    catch(e){showToast('Delete mein error!','error');}
+  };
+
+  // ===== FORM HELPERS =====
+  const inp=(label,name,val='',ph='',type='text')=>`
+    <div><label class="f-label">${label}</label>
+    <input type="${type}" name="${name}" value="${val.replace(/"/g,'&quot;')}" placeholder="${ph}" class="f-input"></div>`;
+  const txt=(label,name,val='',ph='',rows=3)=>`
+    <div><label class="f-label">${label}</label>
+    <textarea name="${name}" rows="${rows}" placeholder="${ph}" class="f-input" style="resize:vertical;">${val}</textarea></div>`;
+  const imgInp=(val='')=>`
+    <div><label class="f-label">🖼️ Image URL (imgbb.com se paste karein)</label>
+    <input type="text" name="imageUrl" value="${val}" placeholder="https://i.ibb.co/..." class="f-input"></div>`;
+
+  // ===== OPEN MODAL =====
+  window.openModal=function(type){
+    editingItem=null;
+    const titles={logo:'📷 Logo Upload',package:'🏔️ Naya Package',vehicle:'🚗 Naya Vehicle',destination:'📸 Naya Destination',review:'⭐ Naya Review'};
+    document.getElementById('modalTitle').textContent=titles[type]||'Add';
+    let f='';
+    if(type==='logo'){
+      f=`<div style="text-align:center;padding:1.5rem;background:rgba(201,169,110,0.06);border:1px solid rgba(201,169,110,0.18);border-radius:14px;margin-bottom:1.25rem;">
+          <div style="font-size:2.5rem;margin-bottom:0.5rem;">🌿</div>
+          <p style="color:#4a7a4a;font-size:0.85rem;line-height:1.7;">imgbb.com par apna logo upload karein → link copy karein → yahan paste karein</p>
+        </div>
+        ${imgInp()}`;
+    } else if(type==='package'){
+      f=inp('Package Ka Naam *','name','','e.g., Darjeeling Hill Tour')
+        +txt('Description','description','','Package ki puri detail likhein...')
+        +inp('Price *','price','','e.g., ₹15,000')
+        +inp('Duration *','duration','','e.g., 5 Days / 4 Nights')
+        +txt('Features (comma se alag karein)','features','','e.g., Luxury Hotels, Guided Tours, Breakfast',2)
+        +imgInp();
+    } else if(type==='vehicle'){
+      f=inp('Vehicle Ka Naam *','name','','e.g., Toyota Innova Crysta')
+        +txt('Description','description','','Vehicle ki detail...')
+        +inp('Price Per Day *','price','','e.g., ₹2,500/day')
+        +inp('Capacity *','capacity','','e.g., 7 Seats')
+        +txt('Features (comma se alag karein)','features','','e.g., AC, GPS, Music System',2)
+        +imgInp();
+    } else if(type==='destination'){
+      f=inp('Jagah Ka Naam *','name','','e.g., Tiger Hill')
+        +txt('Description','description','','Jagah ki khubsurati ke baare mein likhein...')
+        +imgInp();
+    } else if(type==='review'){
+      f=inp('Customer Ka Naam *','reviewAuthor','','e.g., Rahul Sharma')
+        +txt('Review *','reviewText','','Customer ka experience likhein...',4)
+        +`<div><label class="f-label">Rating *</label>
+          <select name="rating" class="f-input">
+            <option value="5">⭐⭐⭐⭐⭐ 5 Stars – Exceptional</option>
+            <option value="4">⭐⭐⭐⭐ 4 Stars – Excellent</option>
+            <option value="3">⭐⭐⭐ 3 Stars – Good</option>
+            <option value="2">⭐⭐ 2 Stars – Fair</option>
+            <option value="1">⭐ 1 Star – Poor</option>
+          </select></div>`;
+    }
+    document.getElementById('formFields').innerHTML=f;
+    document.getElementById('adminForm').dataset.type=type;
+    document.getElementById('adminModal').classList.add('active');
+  };
+
+  // ===== EDIT =====
+  window.editItem=function(item){
+    editingItem=item;
+    const titles={package:'✏️ Package Edit',vehicle:'✏️ Vehicle Edit',destination:'✏️ Destination Edit',review:'✏️ Review Edit'};
+    document.getElementById('modalTitle').textContent=titles[item.type]||'Edit';
+    let f='';
+    if(item.type==='package'){
+      f=inp('Package Ka Naam *','name',item.name||'')
+        +txt('Description','description',item.description||'')
+        +inp('Price *','price',item.price||'')
+        +inp('Duration *','duration',item.duration||'')
+        +txt('Features','features',item.features||'','',2)
+        +imgInp(item.image||'');
+    } else if(item.type==='vehicle'){
+      f=inp('Vehicle Ka Naam *','name',item.name||'')
+        +txt('Description','description',item.description||'')
+        +inp('Price Per Day *','price',item.price||'')
+        +inp('Capacity *','capacity',item.capacity||'')
+        +txt('Features','features',item.features||'','',2)
+        +imgInp(item.image||'');
+    } else if(item.type==='destination'){
+      f=inp('Jagah Ka Naam *','name',item.name||'')
+        +txt('Description','description',item.description||'')
+        +imgInp(item.image||'');
+    } else if(item.type==='review'){
+      f=inp('Customer Ka Naam *','reviewAuthor',item.reviewAuthor||'')
+        +txt('Review *','reviewText',item.reviewText||'','',4)
+        +`<div><label class="f-label">Rating *</label>
+          <select name="rating" class="f-input">
+            ${[5,4,3,2,1].map(n=>`<option value="${n}" ${item.rating===n?'selected':''}>
+              ${'⭐'.repeat(n)} ${n} Stars</option>`).join('')}
+          </select></div>`;
+    }
+    document.getElementById('formFields').innerHTML=f;
+    document.getElementById('adminForm').dataset.type=item.type;
+    document.getElementById('adminModal').classList.add('active');
+  };
+
+  window.closeModal=function(){
+    document.getElementById('adminModal').classList.remove('active');
+    editingItem=null;
+  };
+
+  // ===== SUBMIT =====
+  document.addEventListener('submit',async e=>{
+    if(e.target.id!=='adminForm') return;
+    e.preventDefault();
+    const btn=document.getElementById('submitBtn');
+    const st=document.getElementById('submitText');
+    const ld=document.getElementById('submitLoader');
+    btn.disabled=true; st.style.display='none'; ld.style.display='inline';
+    try{
+      const fd=new FormData(e.target);
+      const type=e.target.dataset.type;
+      const data={type,createdAt:editingItem?editingItem.createdAt:firebase.firestore.Timestamp.now()};
+      if(type==='logo'){
+        // logo handled below
+      } else if(type==='review'){
+        data.reviewAuthor=fd.get('reviewAuthor')||'';
+        data.reviewText=fd.get('reviewText')||'';
+        data.rating=parseInt(fd.get('rating'))||5;
+        data.name=data.reviewAuthor;
+      } else {
+        data.name=fd.get('name')||'';
+        data.description=fd.get('description')||'';
+        if(type==='package'){data.price=fd.get('price')||'';data.duration=fd.get('duration')||'';data.features=fd.get('features')||'';}
+        if(type==='vehicle'){data.price=fd.get('price')||'';data.capacity=fd.get('capacity')||'';data.features=fd.get('features')||'';}
+      }
+      const imgUrl=fd.get('imageUrl');
+      if(imgUrl&&imgUrl.trim()) data.image=imgUrl.trim();
+      else if(editingItem?.image) data.image=editingItem.image;
+
+      if(editingItem) await db.collection('tourItems').doc(editingItem.id).update(data);
+      else await db.collection('tourItems').add(data);
+
+      showToast(editingItem?'Update ho gaya! 🌿':'Add ho gaya! 🌿','success');
+      await loadData(); closeModal(); e.target.reset();
+    }catch(err){console.error(err);showToast('Save mein error aaya!','error');}
+    finally{btn.disabled=false;st.style.display='inline';ld.style.display='none';}
+  });
+
+  // ===== TOAST =====
+  function showToast(msg,type){
+    const c=document.getElementById('toastWrap');
+    const t=document.createElement('div');
+    const bg=type==='success'
+      ?'linear-gradient(135deg,#14532d,#166534)'
+      :'linear-gradient(135deg,#7f1d1d,#991b1b)';
+    t.style.cssText=`background:${bg};color:white;padding:1rem 1.5rem;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);font-size:0.88rem;font-weight:600;animation:toastIn 0.4s cubic-bezier(0.4,0,0.2,1);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(10px);min-width:220px;`;
+    t.textContent=msg; c.appendChild(t);
+    setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(100%)';t.style.transition='all 0.4s';setTimeout(()=>t.remove(),400);},3000);
+  }
+
+  // ===== CLOSE MODAL ON OUTSIDE CLICK =====
+  document.getElementById('adminModal').addEventListener('click',function(e){
+    if(e.target===this) closeModal();
+  });
+
+  // ===== SHAKE ANIMATION =====
+  const style=document.createElement('style');
+  style.textContent='@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}';
+  document.head.appendChild(style);
+
+  db.collection('tourItems').onSnapshot(()=>loadData());
+  loadData();
+</script>
+</body>
+</html>

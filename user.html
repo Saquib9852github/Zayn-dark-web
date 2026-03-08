@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zayn Tour & Travel – Dark Forest Luxury</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;overflow-x:hidden;}
+    body{font-family:'Montserrat',sans-serif;background:#030a04;overflow-x:hidden;color:#d4e8d4;}
+    h1,h2,h3,h4,.serif{font-family:'Cormorant Garamond',serif;}
+
+    ::-webkit-scrollbar{width:7px;}
+    ::-webkit-scrollbar-track{background:#030a04;}
+    ::-webkit-scrollbar-thumb{background:linear-gradient(#4caf50,#c9a96e);border-radius:10px;}
+
+    /* NAVBAR */
+    .navbar{position:sticky;top:0;z-index:1000;background:rgba(3,10,4,0.93);backdrop-filter:blur(24px);border-bottom:1px solid rgba(201,169,110,0.22);box-shadow:0 4px 40px rgba(0,0,0,0.6);}
+    .nav-link{color:#a5d6a7;font-weight:500;text-decoration:none;position:relative;padding-bottom:4px;transition:color 0.3s;font-size:0.88rem;letter-spacing:0.5px;}
+    .nav-link::after{content:'';position:absolute;bottom:0;left:50%;width:0;height:1.5px;background:linear-gradient(90deg,transparent,#c9a96e,transparent);transform:translateX(-50%);transition:width 0.4s;}
+    .nav-link:hover{color:#c9a96e;}
+    .nav-link:hover::after{width:100%;}
+
+    /* HERO */
+    .hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;
+      background:url('https://images.unsplash.com/photo-1448375240586-882707db888b?w=1920&q=90&auto=format&fit=crop') center/cover no-repeat;}
+    .hero-dark{position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,7,3,0.60) 0%,rgba(3,10,4,0.38) 45%,rgba(2,7,3,0.75) 100%);}
+    .hero-bottom-fade{position:absolute;bottom:0;left:0;right:0;height:220px;background:linear-gradient(to top,#030a04,transparent);z-index:2;}
+
+    /* FIREFLIES */
+    .fireflies{position:absolute;inset:0;z-index:1;pointer-events:none;}
+    .ff{position:absolute;width:4px;height:4px;border-radius:50%;animation:ffAnim linear infinite;}
+    @keyframes ffAnim{0%{opacity:0;transform:translate(0,0);}20%{opacity:1;}80%{opacity:1;}100%{opacity:0;transform:translate(var(--tx),var(--ty));}}
+
+    .floating{animation:floatUp 7s ease-in-out infinite;}
+    @keyframes floatUp{0%,100%{transform:translateY(0);}50%{transform:translateY(-20px);}}
+    .scroll-arrow{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);color:#c9a96e;font-size:1.4rem;z-index:3;animation:arrowBounce 2s ease-in-out infinite;}
+    @keyframes arrowBounce{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(12px);}}
+
+    /* BUTTONS */
+    .btn-gold{background:linear-gradient(135deg,#b8860b,#c9a96e,#f4e4c1,#c9a96e,#b8860b);background-size:300% 300%;color:#030a04;font-weight:700;text-transform:uppercase;letter-spacing:2px;border:none;cursor:pointer;transition:all 0.5s;box-shadow:0 4px 20px rgba(201,169,110,0.3);}
+    .btn-gold:hover{background-position:100% 50%;transform:translateY(-3px);box-shadow:0 12px 35px rgba(201,169,110,0.55);}
+    .btn-ghost{background:transparent;color:#c9a96e;font-weight:600;text-transform:uppercase;letter-spacing:2px;border:1.5px solid rgba(201,169,110,0.55);cursor:pointer;transition:all 0.4s;}
+    .btn-ghost:hover{background:rgba(201,169,110,0.10);transform:translateY(-3px);box-shadow:0 8px 25px rgba(201,169,110,0.2);}
+
+    /* DIVIDER */
+    .forest-divider{text-align:center;padding:2rem 0;background:linear-gradient(180deg,transparent,rgba(201,169,110,0.04),transparent);border-top:1px solid rgba(201,169,110,0.07);border-bottom:1px solid rgba(201,169,110,0.07);color:rgba(201,169,110,0.4);font-size:1.3rem;letter-spacing:1.2rem;}
+
+    /* DARK GLASS CARD */
+    .dark-card{background:rgba(5,15,6,0.88);border:1px solid rgba(201,169,110,0.18);border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.7),inset 0 1px 0 rgba(201,169,110,0.08);transition:all 0.5s cubic-bezier(0.4,0,0.2,1);backdrop-filter:blur(10px);position:relative;}
+    .dark-card::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(201,169,110,0.05),transparent);transition:left 0.8s;z-index:1;pointer-events:none;}
+    .dark-card:hover::after{left:140%;}
+    .dark-card:hover{transform:translateY(-14px) scale(1.015);border-color:rgba(201,169,110,0.38);box-shadow:0 30px 70px rgba(0,0,0,0.75),0 0 25px rgba(201,169,110,0.10);}
+
+    /* BADGES */
+    .badge-gold{background:rgba(201,169,110,0.15);color:#f4e4c1;padding:0.35rem 1rem;border-radius:2rem;font-size:0.78rem;font-weight:700;border:1px solid rgba(201,169,110,0.3);}
+    .badge-green{background:rgba(76,175,80,0.12);color:#81c784;padding:0.35rem 1rem;border-radius:2rem;font-size:0.78rem;font-weight:600;border:1px solid rgba(76,175,80,0.25);}
+    .badge-sky{background:rgba(33,150,243,0.10);color:#90caf9;padding:0.35rem 1rem;border-radius:2rem;font-size:0.78rem;font-weight:600;border:1px solid rgba(33,150,243,0.22);}
+    .feature-tag{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(76,175,80,0.07);border:1px solid rgba(76,175,80,0.18);color:#81c784;padding:0.28rem 0.75rem;border-radius:2rem;font-size:0.75rem;font-weight:500;margin:0.2rem;}
+
+    /* SECTION LABEL */
+    .sec-label{display:inline-flex;align-items:center;gap:0.5rem;padding:0.45rem 1.4rem;background:rgba(201,169,110,0.09);border:1px solid rgba(201,169,110,0.22);border-radius:3rem;font-size:0.75rem;letter-spacing:2.5px;text-transform:uppercase;font-weight:600;color:#c9a96e;margin-bottom:1.25rem;}
+    .gold-line{position:relative;display:inline-block;}
+    .gold-line::after{content:'';position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);width:70px;height:2px;background:linear-gradient(90deg,transparent,#c9a96e,transparent);}
+
+    /* WHY CARDS */
+    .why-card{background:rgba(5,15,6,0.82);border:1px solid rgba(201,169,110,0.14);border-radius:20px;padding:2rem;text-align:center;backdrop-filter:blur(12px);transition:all 0.4s;}
+    .why-card:hover{transform:translateY(-10px);border-color:rgba(201,169,110,0.32);box-shadow:0 20px 50px rgba(0,0,0,0.55),0 0 18px rgba(201,169,110,0.07);}
+    .why-icon{width:70px;height:70px;border-radius:50%;margin:0 auto 1.2rem;background:linear-gradient(135deg,rgba(201,169,110,0.10),rgba(76,175,80,0.06));border:1.5px solid rgba(201,169,110,0.28);display:flex;align-items:center;justify-content:center;font-size:1.7rem;transition:all 0.4s;}
+    .why-card:hover .why-icon{background:linear-gradient(135deg,#c9a96e,#f4e4c1);transform:rotate(8deg) scale(1.12);box-shadow:0 8px 25px rgba(201,169,110,0.4);}
+
+    /* GALLERY */
+    .gal-card{border-radius:16px;overflow:hidden;position:relative;box-shadow:0 8px 30px rgba(0,0,0,0.65);transition:all 0.5s;cursor:pointer;border:1px solid rgba(201,169,110,0.13);}
+    .gal-card:hover{transform:scale(1.05) translateY(-5px);box-shadow:0 25px 60px rgba(0,0,0,0.75),0 0 20px rgba(201,169,110,0.12);}
+    .gal-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(2,7,3,0.95),transparent);padding:1.5rem;color:white;transform:translateY(15px);opacity:0;transition:all 0.4s;}
+    .gal-card:hover .gal-overlay{opacity:1;transform:translateY(0);}
+
+    /* REVIEW CARDS */
+    .rev-card{background:rgba(5,15,6,0.82);border:1px solid rgba(201,169,110,0.14);border-radius:20px;padding:2rem;backdrop-filter:blur(12px);transition:all 0.4s;position:relative;overflow:hidden;}
+    .rev-card::before{content:'"';position:absolute;top:-0.5rem;right:1.5rem;font-size:6rem;color:rgba(201,169,110,0.06);font-family:'Cormorant Garamond',serif;line-height:1;}
+    .rev-card:hover{transform:translateY(-8px);border-color:rgba(201,169,110,0.30);box-shadow:0 20px 50px rgba(0,0,0,0.55);}
+    .rev-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#c9a96e,#f4e4c1);display:flex;align-items:center;justify-content:center;color:#030a04;font-size:1.3rem;font-weight:700;flex-shrink:0;}
+
+    /* CONTACT CARDS */
+    .con-card{background:rgba(3,10,4,0.55);border:1px solid rgba(201,169,110,0.20);border-radius:20px;padding:2rem;text-align:center;text-decoration:none;color:white;backdrop-filter:blur(14px);transition:all 0.4s;display:block;}
+    .con-card:hover{background:rgba(201,169,110,0.09);transform:translateY(-10px);border-color:rgba(201,169,110,0.48);box-shadow:0 20px 50px rgba(0,0,0,0.55),0 0 22px rgba(201,169,110,0.10);}
+    .cicon{width:62px;height:62px;border-radius:50%;background:rgba(201,169,110,0.10);border:1.5px solid rgba(201,169,110,0.32);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;color:#c9a96e;transition:all 0.4s;}
+    .con-card:hover .cicon{background:linear-gradient(135deg,#c9a96e,#f4e4c1);color:#030a04;transform:scale(1.15) rotate(8deg);box-shadow:0 8px 25px rgba(201,169,110,0.4);}
+
+    /* MOBILE NAV */
+    .mob-menu{display:none;background:rgba(3,10,4,0.97);border-top:1px solid rgba(201,169,110,0.13);backdrop-filter:blur(20px);}
+    .mob-menu a{display:block;padding:0.9rem 1.5rem;color:#a5d6a7;text-decoration:none;font-weight:500;border-bottom:1px solid rgba(201,169,110,0.06);font-size:0.9rem;transition:all 0.3s;}
+    .mob-menu a:hover{color:#c9a96e;padding-left:2rem;background:rgba(201,169,110,0.04);}
+
+    @keyframes shimmer{0%{background-position:-1000px 0;}100%{background-position:1000px 0;}}
+    .shimmer{background:linear-gradient(90deg,#071009 25%,#0f1e11 50%,#071009 75%);background-size:1000px 100%;animation:shimmer 2s infinite;border-radius:16px;border:1px solid rgba(201,169,110,0.08);}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
+    .fade-up{animation:fadeUp 0.7s ease forwards;}
+
+    @media(max-width:768px){
+      .desk-nav{display:none!important;}
+      .ham-btn{display:block!important;}
+      .auto-grid{grid-template-columns:1fr!important;}
+    }
+    @media(min-width:769px){.ham-btn{display:none!important;}}
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="navbar">
+  <div style="max-width:1400px;margin:0 auto;padding:0.9rem 1.5rem;display:flex;justify-content:space-between;align-items:center;">
+    <div style="display:flex;align-items:center;gap:0.9rem;" id="navBrand">
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1b5e20,#c9a96e);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;box-shadow:0 0 15px rgba(201,169,110,0.35);">🌿</div>
+      <span class="serif" style="font-size:1.5rem;font-weight:700;color:#c9a96e;letter-spacing:1px;">Zayn Tour & Travel</span>
+    </div>
+    <div class="desk-nav" style="display:flex;gap:2.2rem;align-items:center;">
+      <a href="#packages" class="nav-link">🏔️ Tours</a>
+      <a href="#vehicles" class="nav-link">🚗 Vehicles</a>
+      <a href="#gallery" class="nav-link">📸 Gallery</a>
+      <a href="#reviews" class="nav-link">⭐ Reviews</a>
+      <a href="#contact" class="btn-gold" style="padding:0.6rem 1.8rem;border-radius:3rem;text-decoration:none;font-size:0.8rem;display:inline-block;">Contact Us</a>
+    </div>
+    <button class="ham-btn" onclick="toggleNav()" style="background:none;border:1px solid rgba(201,169,110,0.28);border-radius:8px;padding:0.4rem 0.7rem;cursor:pointer;color:#c9a96e;font-size:1.3rem;display:none;">☰</button>
+  </div>
+  <div class="mob-menu" id="mobMenu">
+    <a href="#packages" onclick="closeNav()">🏔️ Tour Packages</a>
+    <a href="#vehicles" onclick="closeNav()">🚗 Vehicles</a>
+    <a href="#gallery" onclick="closeNav()">📸 Gallery</a>
+    <a href="#reviews" onclick="closeNav()">⭐ Reviews</a>
+    <a href="#contact" onclick="closeNav()">📞 Contact Us</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-dark"></div>
+  <div class="fireflies" id="fireflies"></div>
+  <div style="position:relative;z-index:3;text-align:center;color:white;max-width:980px;margin:0 auto;padding:2rem 1.5rem;">
+    <div class="floating">
+      <div style="display:inline-flex;align-items:center;gap:0.7rem;padding:0.65rem 2rem;background:rgba(201,169,110,0.10);border:1px solid rgba(201,169,110,0.28);border-radius:3rem;margin-bottom:2.2rem;backdrop-filter:blur(14px);">
+        <span style="width:8px;height:8px;border-radius:50%;background:#c9a96e;display:inline-block;box-shadow:0 0 8px #c9a96e;animation:pulse 2s ease-in-out infinite;"></span>
+        <span style="font-size:0.8rem;letter-spacing:3px;text-transform:uppercase;font-weight:500;color:#c9a96e;">Premium Dark Forest Experience</span>
+      </div>
+    </div>
+    <h1 class="serif" style="font-size:clamp(3rem,8vw,6.5rem);font-weight:700;line-height:1.05;margin-bottom:1.5rem;text-shadow:0 4px 40px rgba(0,0,0,0.9);">
+      Discover the<br><span style="color:#c9a96e;text-shadow:0 0 50px rgba(201,169,110,0.6),0 4px 40px rgba(0,0,0,0.9);">Extraordinary</span>
+    </h1>
+    <p style="font-size:clamp(1rem,2.5vw,1.22rem);margin-bottom:3rem;opacity:0.88;max-width:600px;margin-left:auto;margin-right:auto;line-height:1.9;font-weight:300;color:#c8e6c9;">
+      Experience luxury travel through mystical dark forests and breathtaking peaks of Darjeeling — curated for the discerning soul
+    </p>
+    <div style="display:flex;gap:1.2rem;justify-content:center;flex-wrap:wrap;">
+      <a href="#packages" class="btn-gold" style="padding:1.1rem 3rem;border-radius:3rem;font-size:0.85rem;text-decoration:none;display:inline-block;">🏔️ Explore Tours</a>
+      <a href="#contact" class="btn-ghost" style="padding:1.1rem 3rem;border-radius:3rem;font-size:0.85rem;text-decoration:none;display:inline-block;">📞 Contact Us</a>
+    </div>
+  </div>
+  <div class="hero-bottom-fade"></div>
+  <div class="scroll-arrow"><i class="fas fa-chevron-down"></i></div>
+</section>
+
+<!-- STATS -->
+<div style="padding:4rem 1.5rem;position:relative;background:url('https://images.unsplash.com/photo-1542401886-65d6c61db217?w=1920&q=85&auto=format&fit=crop') center/cover fixed;">
+  <div style="position:absolute;inset:0;background:rgba(2,7,3,0.84);"></div>
+  <div style="max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:2rem;position:relative;z-index:1;">
+    <div style="text-align:center;border-right:1px solid rgba(201,169,110,0.12);">
+      <div class="serif" style="font-size:3.5rem;font-weight:700;color:#c9a96e;text-shadow:0 0 25px rgba(201,169,110,0.5);line-height:1;">500+</div>
+      <div style="font-size:0.76rem;color:#81c784;letter-spacing:2px;text-transform:uppercase;margin-top:0.5rem;">Happy Travelers</div>
+    </div>
+    <div style="text-align:center;border-right:1px solid rgba(201,169,110,0.12);">
+      <div class="serif" style="font-size:3.5rem;font-weight:700;color:#c9a96e;text-shadow:0 0 25px rgba(201,169,110,0.5);line-height:1;">50+</div>
+      <div style="font-size:0.76rem;color:#81c784;letter-spacing:2px;text-transform:uppercase;margin-top:0.5rem;">Tour Packages</div>
+    </div>
+    <div style="text-align:center;border-right:1px solid rgba(201,169,110,0.12);">
+      <div class="serif" style="font-size:3.5rem;font-weight:700;color:#c9a96e;text-shadow:0 0 25px rgba(201,169,110,0.5);line-height:1;">10+</div>
+      <div style="font-size:0.76rem;color:#81c784;letter-spacing:2px;text-transform:uppercase;margin-top:0.5rem;">Years Experience</div>
+    </div>
+    <div style="text-align:center;">
+      <div class="serif" style="font-size:3.5rem;font-weight:700;color:#c9a96e;text-shadow:0 0 25px rgba(201,169,110,0.5);line-height:1;">4.9★</div>
+      <div style="font-size:0.76rem;color:#81c784;letter-spacing:2px;text-transform:uppercase;margin-top:0.5rem;">Average Rating</div>
+    </div>
+  </div>
+</div>
+
+<!-- WHY CHOOSE US -->
+<section style="padding:5.5rem 1.5rem;position:relative;background:url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=85&auto=format&fit=crop') center/cover fixed;">
+  <div style="position:absolute;inset:0;background:rgba(2,7,3,0.80);"></div>
+  <div style="max-width:1200px;margin:0 auto;position:relative;z-index:1;">
+    <div style="text-align:center;margin-bottom:3.5rem;">
+      <div class="sec-label">🌿 Why Choose Us</div>
+      <h2 class="serif gold-line" style="font-size:clamp(2rem,5vw,3.2rem);color:#f4e4c1;text-shadow:0 2px 20px rgba(0,0,0,0.8);">Nature's Best, Curated For You</h2>
+      <p style="color:#81c784;max-width:520px;margin:2rem auto 0;line-height:1.85;font-size:0.92rem;">We craft journeys that connect you with nature's most breathtaking wonders of Darjeeling and beyond</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.75rem;" class="auto-grid">
+      <div class="why-card"><div class="why-icon">🏕️</div><h3 style="font-size:1.1rem;font-weight:700;color:#f4e4c1;margin-bottom:0.75rem;">Nature Retreats</h3><p style="color:#81c784;font-size:0.87rem;line-height:1.7;">Handpicked eco-friendly stays surrounded by pristine mountains & forests</p></div>
+      <div class="why-card"><div class="why-icon">🛡️</div><h3 style="font-size:1.1rem;font-weight:700;color:#f4e4c1;margin-bottom:0.75rem;">Safe Journeys</h3><p style="color:#81c784;font-size:0.87rem;line-height:1.7;">Your safety is our top priority with expert local guides & secure travel</p></div>
+      <div class="why-card"><div class="why-icon">💎</div><h3 style="font-size:1.1rem;font-weight:700;color:#f4e4c1;margin-bottom:0.75rem;">Luxury Comfort</h3><p style="color:#81c784;font-size:0.87rem;line-height:1.7;">Premium vehicles and accommodations for the ultimate comfort</p></div>
+      <div class="why-card"><div class="why-icon">📞</div><h3 style="font-size:1.1rem;font-weight:700;color:#f4e4c1;margin-bottom:0.75rem;">24/7 Support</h3><p style="color:#81c784;font-size:0.87rem;line-height:1.7;">Always available to assist you throughout your entire journey</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="forest-divider">🌲 &nbsp;&nbsp; 🍃 &nbsp;&nbsp; 🌙 &nbsp;&nbsp; 🍃 &nbsp;&nbsp; 🌲</div>
+
+<!-- PACKAGES -->
+<section id="packages" style="padding:5.5rem 1.5rem;position:relative;background:url('https://images.unsplash.com/photo-1448375240586-882707db888b?w=1920&q=85&auto=format&fit=crop') center/cover fixed;">
+  <div style="position:absolute;inset:0;background:rgba(2,7,3,0.78);"></div>
+  <div style="max-width:1300px;margin:0 auto;position:relative;z-index:1;">
+    <div style="text-align:center;margin-bottom:3.5rem;">
+      <div class="sec-label">🏔️ Curated Experiences</div>
+      <h2 class="serif gold-line" style="font-size:clamp(2rem,5vw,3.2rem);color:#f4e4c1;">Exclusive Tour Packages</h2>
+      <p style="color:#81c784;max-width:520px;margin:2rem auto 0;line-height:1.85;font-size:0.92rem;">Handpicked destinations for unforgettable forest journeys</p>
+    </div>
+    <div id="packagesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:2rem;" class="auto-grid">
+      <div class="shimmer" style="height:440px;"></div>
+      <div class="shimmer" style="height:440px;"></div>
+      <div class="shimmer" style="height:440px;"></div>
+    </div>
+  </div>
+</section>
+
+<div class="forest-divider">🚗 &nbsp;&nbsp; 🌿 &nbsp;&nbsp; ✨ &nbsp;&nbsp; 🌿 &nbsp;&nbsp; 🚗</div>
+
+<!-- VEHICLES -->
+<section id="vehicles" style="padding:5.5rem 1.5rem;position:relative;background:url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=85&auto=format&fit=crop') center/cover fixed;">
+  <div style="position:absolute;inset:0;background:rgba(2,7,3,0.80);"></div>
+  <div style="max-width:1300px;margin:0 auto;position:relative;z-index:1;">
+    <div style="text-align:center;margin-bottom:3.5rem;">
+      <div class="sec-label">🚗 Luxury Fleet</div>
+      <h2 class="serif gold-line" style="font-size:clamp(2rem,5vw,3.2rem);color:#f4e4c1;">Premium Vehicles</h2>
+      <p style="color:#81c784;max-width:520px;margin:2rem auto 0;line-height:1.85;font-size:0.92rem;">Travel through misty mountain routes in ultimate comfort and style</p>
+    </div>
+    <div id="vehiclesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:2rem;" class="auto-grid">
+      <div class="shimmer" style="height:410px;"></div>
+      <div class="shimmer" style="height:410px;"></div>
+    </div>
+  </div>
+</section>
+
+<div class="forest-divider">📸 &nbsp;&nbsp; 🌑 &nbsp;&nbsp; 🍂 &nbsp;&nbsp; 🌑 &nbsp;&nbsp; 📸</div>
+
+<!-- GALLERY -->
+<section id="gallery" style="padding:5.5rem 1.5rem;position:relative;background:url('https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1920&q=85&auto=format&fit=crop') center/cover fixed;">
+  <div style="position:absolute;inset:0;background:rgba(2,7,3,0.78);"></div>
+  <div style="max-width:1300px;margin:0 auto;position:relative;z-index:1;">
+    <div style="text-align:center;margin-bottom:3.5rem;">
+      <div class="sec-label">📸 Visual Stories</div>
+      <h2 class="serif gold-line" style="font-size:clamp(2rem,5vw,3.2rem);color:#f4e4c1;">Dark Forest Gallery</h2>
+      <p style="color:#81c784;max-width:520px;margin:2rem auto 0;line-height:1.85;font-size:0.92rem;">Captured moments from nature's most mystical journeys</p>
+    </div>
+    <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.5rem;" class="auto-grid">
+      <div class="shimmer" style="height:300px;border-radius:16px;"></div>
+      <div class="shimmer" style="height:300px;border-radius:16px;"></div>
+      <div class="shimmer" style="height:300px;border-radius:16px;"></div>
+    </div>
+  </div>
+</section>
+
+<div class="forest-divider">⭐ &nbsp;&nbsp; 🌙 &nbsp;&nbsp; 💫 &nbsp;&nbsp; 🌙 &nbsp;&nbsp; ⭐</div>
+
+<!-- REVIEWS -->
+<section id="reviews" style="padding:5.5rem 1.5rem;position:relative;background:url('https://images.unsplash.com/photo-1501854140801-50d01698950b?w=1920&q=85&auto=format&fit=crop') center/cover fixed;">
+  <div style="position:absolute;inset:0;background:rgba(2,7,3,0.82);"></div>
+  <div style="max-width:1300px;margin:0 auto;position:relative;z-index:1;">
+    <div style="text-align:center;margin-bottom:3.5rem;">
+      <div class="sec-label">💬 Testimonials</div>
+      <h2 class="serif gold-line" style="font-size:clamp(2rem,5vw,3.2rem);color:#f4e4c1;">What Our Travelers Say</h2>
+      <p style="color:#81c784;max-width:520px;margin:2rem auto 0;line-height:1.85;font-size:0.92rem;">Real stories from our distinguished forest explorers</p>
+    </div>
+    <div id="reviewsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:2rem;" class="auto-grid">
+      <div class="shimmer" style="height:250px;"></div>
+      <div class="shimmer" style="height:250px;"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" style="padding:6rem 1.5rem;position:relative;background:url('https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=1920&q=90&auto=format&fit=crop') center/cover no-repeat;">
+  <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(2,7,3,0.90),rgba(4,16,5,0.84),rgba(2,7,3,0.92));"></div>
+  <div style="max-width:1000px;margin:0 auto;text-align:center;position:relative;z-index:2;">
+    <div class="sec-label">🌿 Get In Touch</div>
+    <h2 class="serif" style="font-size:clamp(2rem,5vw,3.5rem);color:#f4e4c1;margin-bottom:1rem;text-shadow:0 0 30px rgba(201,169,110,0.3);">Contact Our Concierge</h2>
+    <p style="color:#81c784;margin-bottom:3.5rem;line-height:1.85;max-width:550px;margin-left:auto;margin-right:auto;font-size:0.95rem;">Begin your extraordinary dark forest journey with personalized assistance</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1.5rem;max-width:900px;margin:0 auto;" class="auto-grid">
+      <a href="tel:+919933923009" class="con-card"><div class="cicon"><i class="fas fa-phone"></i></div><h4 style="font-weight:600;color:#f4e4c1;font-size:0.95rem;margin-bottom:0.4rem;">📞 Phone</h4><p style="font-size:0.85rem;color:#81c784;">+91 9933923009</p></a>
+      <a href="https://wa.me/919933923009" target="_blank" class="con-card"><div class="cicon"><i class="fab fa-whatsapp" style="color:#4caf50;"></i></div><h4 style="font-weight:600;color:#f4e4c1;font-size:0.95rem;margin-bottom:0.4rem;">💬 WhatsApp</h4><p style="font-size:0.85rem;color:#81c784;">Chat with us instantly</p></a>
+      <a href="mailto:rahim8876@gmail.com" class="con-card"><div class="cicon"><i class="fas fa-envelope"></i></div><h4 style="font-weight:600;color:#f4e4c1;font-size:0.95rem;margin-bottom:0.4rem;">✉️ Email</h4><p style="font-size:0.85rem;color:#81c784;">rahim8876@gmail.com</p></a>
+      <div class="con-card" style="cursor:default;"><div class="cicon"><i class="fas fa-map-marker-alt"></i></div><h4 style="font-weight:600;color:#f4e4c1;font-size:0.95rem;margin-bottom:0.4rem;">📍 Location</h4><p style="font-size:0.85rem;color:#81c784;">Darjeeling 734101</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="background:linear-gradient(180deg,#020703,#030a04);padding:3.5rem 1.5rem;text-align:center;border-top:1px solid rgba(201,169,110,0.18);">
+  <div style="max-width:650px;margin:0 auto;">
+    <div style="font-size:2rem;margin-bottom:0.7rem;filter:drop-shadow(0 0 12px rgba(201,169,110,0.5));">🌿</div>
+    <h3 class="serif" style="font-size:1.9rem;color:#c9a96e;margin-bottom:0.7rem;text-shadow:0 0 20px rgba(201,169,110,0.3);">Zayn Tour & Travel</h3>
+    <p style="color:#3a6a3a;font-size:0.87rem;max-width:380px;margin:0 auto 1.5rem;line-height:1.8;">Crafting extraordinary dark forest travel experiences for the discerning explorer</p>
+    <div style="display:flex;justify-content:center;gap:1.2rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+      <a href="tel:+919933923009" style="color:#4a7a4a;text-decoration:none;font-size:0.83rem;transition:color 0.3s;" onmouseover="this.style.color='#c9a96e'" onmouseout="this.style.color='#4a7a4a'">📞 +91 9933923009</a>
+      <span style="color:rgba(201,169,110,0.15);">|</span>
+      <a href="https://wa.me/919933923009" style="color:#4a7a4a;text-decoration:none;font-size:0.83rem;" onmouseover="this.style.color='#c9a96e'" onmouseout="this.style.color='#4a7a4a'">💬 WhatsApp</a>
+      <span style="color:rgba(201,169,110,0.15);">|</span>
+      <a href="mailto:rahim8876@gmail.com" style="color:#4a7a4a;text-decoration:none;font-size:0.83rem;" onmouseover="this.style.color='#c9a96e'" onmouseout="this.style.color='#4a7a4a'">✉️ Email</a>
+    </div>
+    <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(201,169,110,0.25),transparent);margin:1.5rem 0;"></div>
+    <p style="color:rgba(255,255,255,0.15);font-size:0.76rem;">© 2024 Zayn Tour & Travel, Darjeeling. All rights reserved. 🌿</p>
+  </div>
+</footer>
+
+<style>@keyframes pulse{0%,100%{box-shadow:0 0 8px #c9a96e;}50%{box-shadow:0 0 18px #c9a96e,0 0 30px rgba(201,169,110,0.4);}}</style>
+
+<script>
+  // FIREFLIES
+  (function(){
+    const container=document.getElementById('fireflies');
+    const colors=['rgba(201,169,110,0.9)','rgba(129,199,132,0.8)','rgba(244,228,193,0.7)'];
+    for(let i=0;i<28;i++){
+      const ff=document.createElement('div');
+      ff.className='ff';
+      const size=Math.random()*3+2;
+      const tx=(Math.random()-0.5)*200+'px';
+      const ty=(Math.random()-0.5)*200+'px';
+      const dur=Math.random()*8+5;
+      const delay=Math.random()*10;
+      const color=colors[Math.floor(Math.random()*colors.length)];
+      ff.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;background:${color};box-shadow:0 0 ${size*3}px ${color};--tx:${tx};--ty:${ty};animation-duration:${dur}s;animation-delay:${delay}s;`;
+      container.appendChild(ff);
+    }
+  })();
+
+  // FIREBASE
+  const firebaseConfig={apiKey:"AIzaSyALKxd2bFEfLW5-GOKA3jTo-5dh3Q8SLiA",authDomain:"zayn-tour.firebaseapp.com",projectId:"zayn-tour",storageBucket:"zayn-tour.firebasestorage.app",messagingSenderId:"193180929146",appId:"1:193180929146:web:1bba2ae30a315773993fc3"};
+  firebase.initializeApp(firebaseConfig);
+  const db=firebase.firestore();
+  let allData=[];
+
+  async function loadData(){
+    try{
+      const snap=await db.collection('tourItems').orderBy('createdAt','desc').get();
+      allData=snap.docs.map(d=>({id:d.id,...d.data()}));
+      render();
+    }catch(e){console.error(e);}
+  }
+
+  function render(){
+    const packages=allData.filter(i=>i.type==='package');
+    const vehicles=allData.filter(i=>i.type==='vehicle');
+    const gallery=allData.filter(i=>i.type==='destination'||i.type==='gallery');
+    const reviews=allData.filter(i=>i.type==='review');
+    const logo=allData.find(i=>i.type==='logo');
+
+    if(logo?.image){
+      document.getElementById('navBrand').innerHTML=`<img src="${logo.image}" style="height:44px;width:auto;object-fit:contain;border-radius:10px;box-shadow:0 0 15px rgba(201,169,110,0.3);" alt="Logo"><span class="serif" style="font-size:1.5rem;font-weight:700;color:#c9a96e;letter-spacing:1px;">Zayn Tour & Travel</span>`;
+    }
+
+    const wabtn=(label)=>`<a href="https://wa.me/919933923009" target="_blank" style="flex:1;padding:0.8rem;background:linear-gradient(135deg,#1a5c1a,#258025);color:white;border-radius:0.75rem;text-align:center;text-decoration:none;font-size:0.8rem;font-weight:700;display:block;border:1px solid rgba(76,175,80,0.28);">${label}</a>`;
+    const callbtn=(label)=>`<a href="tel:+919933923009" class="btn-gold" style="flex:1;padding:0.8rem;border-radius:0.75rem;text-align:center;text-decoration:none;font-size:0.8rem;display:block;">${label}</a>`;
+
+    // PACKAGES
+    document.getElementById('packagesGrid').innerHTML=packages.length===0?empty('🏔️','New tour packages coming soon!'):
+      packages.map(p=>`<div class="dark-card fade-up">
+        ${p.image?`<img src="${p.image}" style="width:100%;height:240px;object-fit:cover;display:block;" alt="${p.name||''}" onerror="this.style.display='none'">`:`<div style="width:100%;height:240px;background:linear-gradient(135deg,#071009,#0f1e11);display:flex;align-items:center;justify-content:center;font-size:3.5rem;">🏔️</div>`}
+        <div style="padding:1.5rem;position:relative;z-index:2;">
+          <h3 class="serif" style="font-size:1.4rem;font-weight:700;color:#f4e4c1;margin-bottom:0.6rem;">${p.name||''}</h3>
+          <p style="color:#81c784;font-size:0.87rem;line-height:1.7;margin-bottom:1rem;">${p.description||''}</p>
+          <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.85rem;">
+            ${p.price?`<span class="badge-gold">💰 ${p.price}</span>`:''}
+            ${p.duration?`<span class="badge-sky">⏱️ ${p.duration}</span>`:''}
+          </div>
+          ${p.features?`<div style="margin-bottom:1rem;">${p.features.split(',').map(f=>`<span class="feature-tag">🌿 ${f.trim()}</span>`).join('')}</div>`:''}
+          <div style="display:flex;gap:0.75rem;margin-top:1.25rem;">${callbtn('📞 Call')}${wabtn('💬 WhatsApp')}</div>
+        </div></div>`).join('');
+
+    // VEHICLES
+    document.getElementById('vehiclesGrid').innerHTML=vehicles.length===0?empty('🚗','Premium vehicles coming soon!'):
+      vehicles.map(v=>`<div class="dark-card fade-up">
+        ${v.image?`<img src="${v.image}" style="width:100%;height:230px;object-fit:cover;display:block;" alt="${v.name||''}" onerror="this.style.display='none'">`:`<div style="width:100%;height:230px;background:linear-gradient(135deg,#071009,#0f1e11);display:flex;align-items:center;justify-content:center;font-size:3.5rem;">🚗</div>`}
+        <div style="padding:1.5rem;position:relative;z-index:2;">
+          <h3 class="serif" style="font-size:1.4rem;font-weight:700;color:#f4e4c1;margin-bottom:0.6rem;">${v.name||''}</h3>
+          <p style="color:#81c784;font-size:0.87rem;line-height:1.7;margin-bottom:1rem;">${v.description||''}</p>
+          <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.85rem;">
+            ${v.price?`<span class="badge-gold">💰 ${v.price}</span>`:''}
+            ${v.capacity?`<span class="badge-green">👥 ${v.capacity}</span>`:''}
+          </div>
+          ${v.features?`<div style="margin-bottom:1rem;">${v.features.split(',').map(f=>`<span class="feature-tag">✅ ${f.trim()}</span>`).join('')}</div>`:''}
+          <div style="display:flex;gap:0.75rem;margin-top:1.25rem;">${callbtn('📞 Book')}${wabtn('💬 WhatsApp')}</div>
+        </div></div>`).join('');
+
+    // GALLERY
+    document.getElementById('galleryGrid').innerHTML=gallery.length===0?empty('📸','Gallery coming soon!'):
+      gallery.map(g=>`<div class="gal-card fade-up">
+        <img src="${g.image||''}" alt="${g.name||''}" style="width:100%;height:290px;object-fit:cover;display:block;" onerror="this.parentElement.innerHTML='<div style=\'height:290px;background:linear-gradient(135deg,#071009,#1a3a1b);display:flex;align-items:center;justify-content:center;font-size:3rem;\'>🌿</div>'">
+        <div class="gal-overlay">
+          <h4 class="serif" style="font-size:1.25rem;font-weight:700;color:#f4e4c1;margin-bottom:0.3rem;">${g.name||''}</h4>
+          ${g.description?`<p style="font-size:0.84rem;color:#a5d6a7;">${g.description}</p>`:''}
+        </div>
+      </div>`).join('');
+
+    // REVIEWS
+    document.getElementById('reviewsGrid').innerHTML=reviews.length===0?empty('⭐','Reviews coming soon!'):
+      reviews.map(r=>`<div class="rev-card fade-up">
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;">
+          <div class="rev-avatar">${r.reviewAuthor?r.reviewAuthor[0].toUpperCase():'?'}</div>
+          <div>
+            <h4 style="font-weight:700;color:#f4e4c1;font-size:0.95rem;">${r.reviewAuthor||'Anonymous'}</h4>
+            <div style="color:#f59e0b;font-size:1rem;letter-spacing:2px;">${'★'.repeat(r.rating||5)}${'☆'.repeat(5-(r.rating||5))}</div>
+          </div>
+        </div>
+        <p class="serif" style="font-style:italic;color:#a5d6a7;line-height:1.9;font-size:1.05rem;">"${r.reviewText||''}"</p>
+        <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(201,169,110,0.1);">
+          <span style="font-size:0.78rem;color:#c9a96e;font-weight:500;">🌿 Verified Traveler</span>
+        </div>
+      </div>`).join('');
+  }
+
+  function empty(icon,msg){
+    return `<div style="grid-column:1/-1;text-align:center;padding:4rem 2rem;">
+      <div style="font-size:3.5rem;margin-bottom:1rem;filter:drop-shadow(0 0 10px rgba(201,169,110,0.3));">${icon}</div>
+      <p style="font-size:1rem;color:#3a6a3a;">${msg}</p>
+    </div>`;
+  }
+  function toggleNav(){const m=document.getElementById('mobMenu');m.style.display=m.style.display==='block'?'none':'block';}
+  function closeNav(){document.getElementById('mobMenu').style.display='none';}
+  db.collection('tourItems').onSnapshot(()=>loadData());
+  loadData();
+</script>
+</body>
+</html>
